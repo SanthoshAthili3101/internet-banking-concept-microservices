@@ -8,6 +8,8 @@ plugins {
 gitProperties {
 	dateFormat = "yyyy-MM-dd'T'HH:mmZ"
 	dateFormatTimeZone = "IST"
+    // Add this line so Docker doesn't crash:
+    failOnNoGitDirectory = false
 }
 
 group = 'com.javatodev.finance'
@@ -28,8 +30,6 @@ ext {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-
     //SPRING BOOT - TRACING
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
@@ -41,12 +41,12 @@ dependencies {
     implementation 'io.github.openfeign:feign-okhttp:13.2.1'
 
     //SPRING CLOUD CONFIG
-    implementation 'org.springframework.cloud:spring-cloud-starter-config'
-    implementation 'org.springframework.cloud:spring-cloud-starter-bootstrap'
     implementation 'org.keycloak:keycloak-admin-client:24.0.4'
+    // Correct Group ID: org.apache.commons
+    implementation 'org.apache.commons:commons-lang3:3.14.0'
 
     //SWAGGER
-    implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.1.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
 
 
     compileOnly 'org.projectlombok:lombok'

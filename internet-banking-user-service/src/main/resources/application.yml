@@ -1,3 +1,24 @@
 spring:
   application:
     name: internet-banking-user-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}?allowPublicKeyRetrieval=true&useSSL=false
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+# ===============================
+# KEYCLOAK CONFIGURATION (ADDED)
+# ===============================
+app:
+  config:
+    keycloak:
+      server-url: ${KEYCLOAK_SERVER_URL:http://localhost:8080}
+      realm: ${KEYCLOAK_REALM:dev-realm}
+      client-id: ${KEYCLOAK_CLIENT_ID:banking-user-client}
+      client-secret: ${KEYCLOAK_CLIENT_SECRET:placeholder}

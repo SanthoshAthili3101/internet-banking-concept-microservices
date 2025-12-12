@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: fintech-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+      - name: keycloak
+        image: quay.io/keycloak/keycloak:24.0.1
+        args: ["start-dev"]
+        ports:
+        - containerPort: 8080
+        env:
+        - name: KEYCLOAK_ADMIN
+          value: "admin"
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          value: "admin"
+        - name: KC_PROXY
+          value: "edge"
+        # FIX: Explicitly set the Hostname
+        - name: KC_HOSTNAME
+          value: "a9108f982f4404539b584645b87994e0-1749315052.ap-south-1.elb.amazonaws.com"
+        # FIX: Allow HTTP (since we don't have an SSL Certificate yet)
+        - name: KC_HOSTNAME_STRICT
+          value: "false"
+        - name: KC_HOSTNAME_STRICT_HTTPS
+          value: "false"
+        - name: KC_HTTP_ENABLED
+          value: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+  namespace: fintech-prod
+spec:
+  selector:
+    app: keycloak
+  type: LoadBalancer
+  ports:
+    - port: 8080
+      targetPort: 8080

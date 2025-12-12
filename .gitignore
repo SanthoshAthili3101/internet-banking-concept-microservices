@@ -1,1 +1,84 @@
 .idea
+# ==============================================================================
+# JAVA & GRADLE (For your Microservices)
+# ==============================================================================
+.gradle/
+build/
+out/
+bin/
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Gradle wrapper (Keep the jar only if you want to enforce version, otherwise ignore)
+!gradle-wrapper.jar
+
+# Logs
+*.log
+
+# ==============================================================================
+# TERRAFORM (For your Infrastructure folder)
+# ==============================================================================
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files (CRITICAL: Never commit state files containing secrets)
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Exclude all .tfvars files, which are likely to contain sensitive data
+*.tfvars
+*.tfvars.json
+
+# Ignore override files as they are usually local to the environment
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+
+# ==============================================================================
+# IDEs & EDITORS (VS Code, IntelliJ, Eclipse)
+# ==============================================================================
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.classpath
+.project
+.settings/
+.factorypath
+
+# ==============================================================================
+# OS SYSTEM FILES
+# ==============================================================================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ==============================================================================
+# AWS & SECRETS
+# ==============================================================================
+# AWS credentials if accidentally saved locally
+.aws/
+
+# ==============================================================================
+# KUBERNETES (Safety Net)
+# ==============================================================================
+# In a real production environment, you would ignore the secret file 
+# and use SealedSecrets or ExternalSecrets. 
+# For this portfolio project, we are committing it, but adding a warning rule here 
+# in case you create local backup files.
+*.yaml.bak
+*.yml.bak

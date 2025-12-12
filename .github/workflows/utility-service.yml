@@ -1,0 +1,78 @@
+name: CI/CD - Utility Service
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      # Ensure this matches your actual folder name!
+      - 'internet-banking-utility-payment-service/**'
+      - '.github/workflows/utility-service.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+    env:
+      # Folder name in your git repo
+      SERVICE_DIR: 'internet-banking-utility-payment-service'
+      # ECR Repository Name
+      IMAGE_NAME: 'fintech/utility-service'
+      # Kubernetes Manifest to update
+      MANIFEST_FILE: 'k8s-manifests/utility-service.yaml'
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build with Gradle
+        run: chmod +x gradlew && ./gradlew build -x test
+        working-directory: ${{ env.SERVICE_DIR }}
+
+      - name: Prepare Docker Context
+        run: |
+          mv ${{ env.SERVICE_DIR }}/build/libs/*SNAPSHOT.jar ${{ env.SERVICE_DIR }}/app.jar
+          mv ${{ env.SERVICE_DIR }}/Dockerfile ${{ env.SERVICE_DIR }}/Dockerfile.build || true
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and Push to ECR
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          cd ${{ env.SERVICE_DIR }}
+          docker build -t $REGISTRY/${{ env.IMAGE_NAME }}:$IMAGE_TAG .
+          docker push $REGISTRY/${{ env.IMAGE_NAME }}:$IMAGE_TAG
+
+      - name: Update Kubernetes Manifest (GitOps)
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          sed -i "s|image: .*${{ env.IMAGE_NAME }}:.*|image: $REGISTRY/${{ env.IMAGE_NAME }}:$IMAGE_TAG|g" ${{ env.MANIFEST_FILE }}
+
+      - name: Commit and Push
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add ${{ env.MANIFEST_FILE }}
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update Utility Service image to ${{ github.sha }}" && git pull --rebase && git push)

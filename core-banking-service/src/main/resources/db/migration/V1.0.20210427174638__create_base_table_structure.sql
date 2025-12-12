@@ -1,4 +1,4 @@
--- banking_core_service.banking_core_user definition
+-- banking_core_user definition
 
 CREATE TABLE `banking_core_user` (
     `id`                    bigint(20) NOT NULL AUTO_INCREMENT,
@@ -9,7 +9,7 @@ CREATE TABLE `banking_core_user` (
     PRIMARY KEY (`id`)
 );
 
--- banking_core_service.banking_core_account definition
+-- banking_core_account definition
 
 CREATE TABLE `banking_core_account` (
     `id`                bigint(20) NOT NULL AUTO_INCREMENT,
@@ -24,7 +24,7 @@ CREATE TABLE `banking_core_account` (
     CONSTRAINT `FKt5uqy9p0v3rp3yhlgvm7ep0ij` FOREIGN KEY (`user_id`) REFERENCES `banking_core_user`(`id`)
 );
 
--- banking_core_service.banking_core_account definition
+-- banking_core_utility_account definition
 
 CREATE TABLE `banking_core_utility_account` (
     `id`            bigint(20) NOT NULL AUTO_INCREMENT,

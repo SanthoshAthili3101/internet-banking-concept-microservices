@@ -5,5 +5,5 @@ import com.javatodev.finance.model.entity.UtilityPaymentEntity;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UtilityPaymentRepository extends JpaRepository<UtilityPaymentEntity, UtilityPayment> {
+public interface UtilityPaymentRepository extends JpaRepository<UtilityPaymentEntity, Long> {
 }

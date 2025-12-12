@@ -16,7 +16,7 @@ public class KeycloakProperties {
     @Getter @Value("${app.config.keycloak.realm}")
     private String realm;
 
-    @Value("${app.config.keycloak.clientId}")
+    @Value("${app.config.keycloak.client-Id}")
     private String clientId;
 
     @Value("${app.config.keycloak.client-secret}")

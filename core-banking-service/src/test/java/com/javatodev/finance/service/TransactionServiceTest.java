@@ -180,7 +180,7 @@ class TransactionServiceTest {
         account.setNumber("A1");
         account.setActualBalance(BigDecimal.valueOf(50));
         assertThrows(InsufficientFundsException.class, () -> {
-            transactionService.fundTransfer(new FundTransferRequest("A1", "A2", BigDecimal.valueOf(100)));
+            transactionService.fundTransfer(new FundTransferRequest());
         });
     }
 }

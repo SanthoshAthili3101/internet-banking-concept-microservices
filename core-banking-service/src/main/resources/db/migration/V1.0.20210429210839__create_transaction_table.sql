@@ -1,4 +1,4 @@
--- banking_core_service.banking_core_transaction definition
+-- banking_core_transaction definition
 
 CREATE TABLE `banking_core_transaction` (
     `id`               bigint(20)  NOT NULL AUTO_INCREMENT,
