@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: user-service
-        image: 982081054052.dkr.ecr.ap-south-1.amazonaws.com/fintech/user-service:v1
+        image: 982081054052.dkr.ecr.ap-south-1.amazonaws.com/fintech/user-service:96f00aab0cd399573aed74df8b3c61a09e622202
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
