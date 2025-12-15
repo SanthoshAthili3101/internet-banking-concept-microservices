@@ -4,28 +4,35 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'core-banking-service/**' # <--- THE MAGIC LINE
-      - '.github/workflows/core-service.yml' # Also run if this pipeline file changes
+      - 'core-banking-service/**' 
+      - '.github/workflows/core-service.yml' 
 
+# Permission needed to push changes back to the repo (GitOps)
 permissions:
   contents: write
 
 jobs:
   build-push-deploy:
     runs-on: ubuntu-latest
+    
+    # Optional: Adds a manual approval gate if you configure "production" in GitHub Settings
+    environment: production 
+    
     env:
       SERVICE_DIR: 'core-banking-service'
       IMAGE_NAME: 'fintech/banking-core'
-      MANIFEST_FILE: 'k8s-manifests/core-service.yaml'
+      MANIFEST_FILE: 'k8s-manifests/core-service.yaml' # Ensure this matches your file name!
       
     steps:
       - uses: actions/checkout@v4
 
+      # 1. Java Setup with Caching (Speeds up repeated builds)
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
+          cache: 'gradle'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -39,6 +46,7 @@ jobs:
           mv ${{ env.SERVICE_DIR }}/build/libs/*SNAPSHOT.jar ${{ env.SERVICE_DIR }}/app.jar
           mv ${{ env.SERVICE_DIR }}/Dockerfile ${{ env.SERVICE_DIR }}/Dockerfile.build || true
 
+      # 2. Login to AWS using Secrets
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -50,21 +58,28 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and Push to ECR
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          cd ${{ env.SERVICE_DIR }}
-          docker build -t $REGISTRY/${{ env.IMAGE_NAME }}:$IMAGE_TAG .
-          docker push $REGISTRY/${{ env.IMAGE_NAME }}:$IMAGE_TAG
+      # 3. Set up Docker Buildx (Required for advanced caching)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Update Kubernetes Manifest (GitOps)
+      # 4. Build and Push with Caching
+      - name: Build and Push to ECR
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ env.SERVICE_DIR }}
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          # Use GitHub Actions cache to speed up Docker builds
+          cache-from: type=gha 
+          cache-to: type=gha,mode=max
+
+      # 5. GitOps: Update Manifest
+      - name: Update Kubernetes Manifest
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          # Update the image tag in the YAML file
+          # Replace the image tag in the YAML file
           sed -i "s|image: .*${{ env.IMAGE_NAME }}:.*|image: $REGISTRY/${{ env.IMAGE_NAME }}:$IMAGE_TAG|g" ${{ env.MANIFEST_FILE }}
           
       - name: Commit and Push
@@ -72,4 +87,5 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add ${{ env.MANIFEST_FILE }}
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update Core Service image to ${{ github.sha }}" && git pull --rebase && git push)
+          # Only commit if the file actually changed
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Deploy: Update Core Service to ${{ github.sha }}" && git pull --rebase && git push)

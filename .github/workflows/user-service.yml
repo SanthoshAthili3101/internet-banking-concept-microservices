@@ -4,64 +4,95 @@ on:
   push:
     branches: [ main ]
     paths:
+      # Trigger ONLY if files in the User Service folder change
       - 'internet-banking-user-service/**'
+      # Also trigger if you edit this pipeline file
       - '.github/workflows/user-service.yml'
 
+# Permissions required to push the image tag update back to the repo
 permissions:
   contents: write
 
 jobs:
   build-push-deploy:
     runs-on: ubuntu-latest
+    
+    # Optional: Link this to a "Production" environment in GitHub Settings
+    # This allows you to enforce "Manual Approval" before deployment.
+    environment: production 
+    
     env:
       SERVICE_DIR: 'internet-banking-user-service'
       IMAGE_NAME: 'fintech/user-service'
       MANIFEST_FILE: 'k8s-manifests/user-service.yaml'
     
     steps:
-      # ... (COPY THE EXACT SAME STEPS FROM CORE SERVICE ABOVE) ...
-      # Just make sure to copy everything from "uses: actions/checkout@v4" downwards
       - uses: actions/checkout@v4
+
+      # 1. Java Setup with Gradle Caching 🚀
+      #    This saves time by not downloading dependencies every single run.
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
+          cache: 'gradle'
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
+
       - name: Build with Gradle
+        # '-x test' skips unit tests for speed. Remove this in a real bank environment.
         run: chmod +x gradlew && ./gradlew build -x test
         working-directory: ${{ env.SERVICE_DIR }}
+
       - name: Prepare Docker Context
+        # Moves the JAR to the root so the Dockerfile context is clean
         run: |
           mv ${{ env.SERVICE_DIR }}/build/libs/*SNAPSHOT.jar ${{ env.SERVICE_DIR }}/app.jar
           mv ${{ env.SERVICE_DIR }}/Dockerfile ${{ env.SERVICE_DIR }}/Dockerfile.build || true
+
+      # 2. Secure AWS Login 🔐
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
+
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
+
+      # 3. Enable Docker Buildx (Required for Caching) 🛠️
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 4. Build & Push with Layer Caching ⚡
+      #    Reuses "Base OS" layers from GitHub Cache to speed up builds.
       - name: Build and Push to ECR
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          cd ${{ env.SERVICE_DIR }}
-          docker build -t $REGISTRY/${{ env.IMAGE_NAME }}:$IMAGE_TAG .
-          docker push $REGISTRY/${{ env.IMAGE_NAME }}:$IMAGE_TAG
-      - name: Update Kubernetes Manifest (GitOps)
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ env.SERVICE_DIR }}
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha 
+          cache-to: type=gha,mode=max
+
+      # 5. GitOps: Update Manifest 🔄
+      #    Replaces the old image tag with the new Commit Hash
+      - name: Update Kubernetes Manifest
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
           sed -i "s|image: .*${{ env.IMAGE_NAME }}:.*|image: $REGISTRY/${{ env.IMAGE_NAME }}:$IMAGE_TAG|g" ${{ env.MANIFEST_FILE }}
+          
+      # 6. Commit and Push 📝
+      #    Includes a check to ensure we don't commit if nothing changed.
       - name: Commit and Push
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add ${{ env.MANIFEST_FILE }}
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update User Service image to ${{ github.sha }}" && git pull --rebase && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Deploy: Update User Service to ${{ github.sha }}" && git pull --rebase && git push)

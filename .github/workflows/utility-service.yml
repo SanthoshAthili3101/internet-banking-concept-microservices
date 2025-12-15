@@ -4,45 +4,54 @@ on:
   push:
     branches: [ main ]
     paths:
-      # Ensure this matches your actual folder name!
+      # Trigger ONLY if files in this specific service folder change
       - 'internet-banking-utility-payment-service/**'
+      # Also trigger if this pipeline file itself is edited
       - '.github/workflows/utility-service.yml'
 
+# Permissions required for GitOps (pushing the manifest update back to the repo)
 permissions:
   contents: write
 
 jobs:
   build-push-deploy:
     runs-on: ubuntu-latest
+    
+    # Optional: Adds a manual approval gate via GitHub Environments
+    environment: production 
+    
     env:
-      # Folder name in your git repo
       SERVICE_DIR: 'internet-banking-utility-payment-service'
-      # ECR Repository Name
       IMAGE_NAME: 'fintech/utility-service'
-      # Kubernetes Manifest to update
+      # ⚠️ IMPORTANT: Verify this filename matches your actual file (e.g., 4-utility-service.yaml)
       MANIFEST_FILE: 'k8s-manifests/utility-service.yaml'
     
     steps:
       - uses: actions/checkout@v4
 
+      # 1. Java Setup with Gradle Caching 🚀
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
+          cache: 'gradle'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
       - name: Build with Gradle
+        # '-x test' skips unit tests for speed. Remove in real prod environments.
         run: chmod +x gradlew && ./gradlew build -x test
         working-directory: ${{ env.SERVICE_DIR }}
 
       - name: Prepare Docker Context
+        # Moves JAR to root so Docker build context is clean
         run: |
           mv ${{ env.SERVICE_DIR }}/build/libs/*SNAPSHOT.jar ${{ env.SERVICE_DIR }}/app.jar
           mv ${{ env.SERVICE_DIR }}/Dockerfile ${{ env.SERVICE_DIR }}/Dockerfile.build || true
 
+      # 2. Secure AWS Login 🔐
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -54,25 +63,32 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and Push to ECR
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          cd ${{ env.SERVICE_DIR }}
-          docker build -t $REGISTRY/${{ env.IMAGE_NAME }}:$IMAGE_TAG .
-          docker push $REGISTRY/${{ env.IMAGE_NAME }}:$IMAGE_TAG
+      # 3. Set up Docker Buildx (Required for Caching) 🛠️
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Update Kubernetes Manifest (GitOps)
+      # 4. Build and Push with Layer Caching ⚡
+      - name: Build and Push to ECR
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ env.SERVICE_DIR }}
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha 
+          cache-to: type=gha,mode=max
+
+      # 5. GitOps: Update Kubernetes Manifest 🔄
+      - name: Update Kubernetes Manifest
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
           sed -i "s|image: .*${{ env.IMAGE_NAME }}:.*|image: $REGISTRY/${{ env.IMAGE_NAME }}:$IMAGE_TAG|g" ${{ env.MANIFEST_FILE }}
-
+          
+      # 6. Commit and Push Changes 📝
       - name: Commit and Push
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add ${{ env.MANIFEST_FILE }}
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update Utility Service image to ${{ github.sha }}" && git pull --rebase && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Deploy: Update Utility Service to ${{ github.sha }}" && git pull --rebase && git push)

@@ -8,13 +8,3 @@ output "ecr_urls" {
   }
 }
 
-
-output "argocd_url" {
-  value       = try(data.kubernetes_service.argocd_server.status[0].load_balancer[0].ingress[0].hostname, "Waiting for Load Balancer...")
-  description = "The public URL to access ArgoCD"
-}
-
-output "argocd_password_command" {
-  value       = "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 --decode"
-  description = "Run this to get the admin password"
-}

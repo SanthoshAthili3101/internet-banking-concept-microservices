@@ -4,42 +4,57 @@ on:
   push:
     branches: [ main ]
     paths:
-      # Ensure this matches your actual folder name!
+      # Trigger ONLY if files in this specific service folder change
       - 'internet-banking-fund-transfer-service/**'
+      # Also trigger if this pipeline file itself is edited
       - '.github/workflows/fund-transfer.yml'
 
+# Permissions required for GitOps (pushing the manifest update back to the repo)
 permissions:
   contents: write
 
 jobs:
   build-push-deploy:
     runs-on: ubuntu-latest
+    
+    # Optional: Connects to "production" environment in GitHub Settings (allows Manual Approval)
+    environment: production 
+    
     env:
       SERVICE_DIR: 'internet-banking-fund-transfer-service'
       IMAGE_NAME: 'fintech/fund-transfer'
+      # ⚠️ IMPORTANT: Verify this filename matches your actual file (e.g., 5-fund-transfer.yaml)
       MANIFEST_FILE: 'k8s-manifests/fund-transfer.yaml'
     
     steps:
       - uses: actions/checkout@v4
 
+      # 1. Java Setup with Gradle Caching 🚀
+      #    Speeds up builds by reusing dependencies from previous runs.
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
+          cache: 'gradle'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
       - name: Build with Gradle
+        # '-x test' skips unit tests to speed up the build for this demo.
+        # In a real bank, remove '-x test' to enforce quality gates.
         run: chmod +x gradlew && ./gradlew build -x test
         working-directory: ${{ env.SERVICE_DIR }}
 
       - name: Prepare Docker Context
+        # Moves the built JAR and Dockerfile to the root of the service dir for cleaner Docker builds
         run: |
           mv ${{ env.SERVICE_DIR }}/build/libs/*SNAPSHOT.jar ${{ env.SERVICE_DIR }}/app.jar
           mv ${{ env.SERVICE_DIR }}/Dockerfile ${{ env.SERVICE_DIR }}/Dockerfile.build || true
 
+      # 2. Login to AWS using GitHub Secrets 🔐
+      #    Uses long-lived access keys stored securely in Repo Settings.
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -51,25 +66,39 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      # 3. Set up Docker Buildx 🛠️
+      #    Required for advanced features like caching and multi-platform builds.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 4. Build and Push with Layer Caching ⚡
+      #    Uses GitHub Actions cache ('gha') to store Docker layers.
+      #    If you only change 1 line of code, it won't rebuild the OS layers, saving minutes.
       - name: Build and Push to ECR
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          cd ${{ env.SERVICE_DIR }}
-          docker build -t $REGISTRY/${{ env.IMAGE_NAME }}:$IMAGE_TAG .
-          docker push $REGISTRY/${{ env.IMAGE_NAME }}:$IMAGE_TAG
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ env.SERVICE_DIR }}
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha 
+          cache-to: type=gha,mode=max
 
-      - name: Update Kubernetes Manifest (GitOps)
+      # 5. GitOps: Update Kubernetes Manifest 🔄
+      #    Updates the YAML file with the new image tag (Commit Hash).
+      - name: Update Kubernetes Manifest
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          # 'sed' finds the 'image:' line and swaps the old tag for the new one.
           sed -i "s|image: .*${{ env.IMAGE_NAME }}:.*|image: $REGISTRY/${{ env.IMAGE_NAME }}:$IMAGE_TAG|g" ${{ env.MANIFEST_FILE }}
-
+          
+      # 6. Commit and Push Changes 📝
+      #    ArgoCD watches the repo; once this commit lands, ArgoCD triggers the cluster update.
       - name: Commit and Push
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add ${{ env.MANIFEST_FILE }}
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update Fund Transfer image to ${{ github.sha }}" && git pull --rebase && git push)
+          # Logic: "Only commit if the file actually changed". Prevents empty commits.
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Deploy: Update Fund Transfer to ${{ github.sha }}" && git pull --rebase && git push)

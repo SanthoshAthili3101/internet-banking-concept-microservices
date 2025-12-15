@@ -100,7 +100,7 @@ resource "aws_route_table_association" "public_2" {
 # 1. Elastic IP (Static IP for the NAT Gateway)
 resource "aws_eip" "nat" {
   domain = "vpc"
-  
+
   tags = {
     Name = "fintech-nat-eip"
   }
@@ -109,7 +109,7 @@ resource "aws_eip" "nat" {
 # 2. The NAT Gateway (Must live in a PUBLIC Subnet)
 resource "aws_nat_gateway" "main" {
   allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.public_1.id  # It sits in the public lobby
+  subnet_id     = aws_subnet.public_1.id # It sits in the public lobby
 
   tags = {
     Name = "fintech-nat-gw"
