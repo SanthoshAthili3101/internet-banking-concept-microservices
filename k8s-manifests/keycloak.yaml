@@ -24,28 +24,32 @@ spec:
           value: "admin"
         - name: KEYCLOAK_ADMIN_PASSWORD
           value: "admin"
-        
-        # --- 🚨 CRITICAL CONNECTIVITY FIXES 🚨 ---
-        
-        # 1. Proxy Mode: Trust the AWS Load Balancer headers
+
+        # --- NETWORK CONFIG ---
         - name: KC_PROXY
           value: "edge"
-        
-        # 2. Hostname: Set ONLY the domain name (No http://, No :8080)
-        - name: KC_HOSTNAME
-          value: "a16df262c5cae44318644bdae3897f7a-720103841.ap-south-1.elb.amazonaws.com"
-        
-        # 3. Security Relaxations for HTTP (Dev Mode)
+        - name: KC_HTTP_ENABLED
+          value: "true"
         - name: KC_HOSTNAME_STRICT
           value: "false"
         - name: KC_HOSTNAME_STRICT_HTTPS
           value: "false"
-        - name: KC_HTTP_ENABLED
-          value: "true"
+
+        # --- THE FIXES ---
         
-        # 4. Disable SSL Cookie Requirement (Fixes "Cookie not found")
+        # 1. Hostname MUST include the port if you see it in the browser
+        - name: KC_HOSTNAME
+          value: "a16df262c5cae44318644bdae3897f7a-720103841.ap-south-1.elb.amazonaws.com"
+        - name: KC_HOSTNAME_PORT
+          value: "8080"
+          
+        # 2. Disable SSL Cookies (Fixes "Cookie not found")
         - name: KC_SPI_SSL_REQUIRED
           value: "none"
+
+        # 3. FIX THE IFRAME TIMEOUT (The magic variable)
+        - name: KC_SPI_STICKY_SESSION_ENCODER_INFI_SPAN_SHOULD_ATTACH_AUTH_SESSION_ID
+          value: "true"
 ---
 apiVersion: v1
 kind: Service
