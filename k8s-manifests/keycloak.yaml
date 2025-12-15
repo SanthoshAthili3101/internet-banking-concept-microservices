@@ -25,31 +25,38 @@ spec:
         - name: KEYCLOAK_ADMIN_PASSWORD
           value: "admin"
 
-        # --- NETWORK CONFIG ---
+        # --- 🚨 NUCLEAR FIX CONFIGURATION 🚨 ---
+        
+        # 1. FORCE THE PUBLIC URL (Frontend & Redirects)
+        # We explicitly tell Keycloak: "This is your URL. Do not guess."
+        - name: KC_HOSTNAME_URL
+          value: "http://a16df262c5cae44318644bdae3897f7a-720103841.ap-south-1.elb.amazonaws.com:8080"
+        
+        # 2. FORCE THE ADMIN CONSOLE URL (Backend UI)
+        # This fixes the "Loading..." spinner and mixed content errors
+        - name: KC_HOSTNAME_ADMIN_URL
+          value: "http://a16df262c5cae44318644bdae3897f7a-720103841.ap-south-1.elb.amazonaws.com:8080"
+
+        # 3. NETWORK PROXY SETTINGS
         - name: KC_PROXY
-          value: "edge"
+          value: "edge"  # Trust AWS ELB headers
         - name: KC_HTTP_ENABLED
           value: "true"
+        
+        # 4. DISABLE SECURITY CHECKS (Dev Mode)
         - name: KC_HOSTNAME_STRICT
           value: "false"
         - name: KC_HOSTNAME_STRICT_HTTPS
           value: "false"
-
-        # --- THE FIXES ---
         
-        # 1. Hostname MUST include the port if you see it in the browser
-        - name: KC_HOSTNAME
-          value: "a16df262c5cae44318644bdae3897f7a-720103841.ap-south-1.elb.amazonaws.com"
-        - name: KC_HOSTNAME_PORT
-          value: "8080"
-          
-        # 2. Disable SSL Cookies (Fixes "Cookie not found")
+        # 5. DISABLE SSL COOKIES (Fixes "Cookie not found")
         - name: KC_SPI_SSL_REQUIRED
           value: "none"
-
-        # 3. FIX THE IFRAME TIMEOUT (The magic variable)
+          
+        # 6. FIX IFRAME TIMEOUT
         - name: KC_SPI_STICKY_SESSION_ENCODER_INFI_SPAN_SHOULD_ATTACH_AUTH_SESSION_ID
           value: "true"
+
 ---
 apiVersion: v1
 kind: Service
