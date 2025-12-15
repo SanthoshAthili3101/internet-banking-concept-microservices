@@ -25,34 +25,29 @@ spec:
         - name: KEYCLOAK_ADMIN_PASSWORD
           value: "admin"
 
-        # --- 🚨 TCP MODE CONFIGURATION (The Fix) 🚨 ---
+        # --- 🚨 LOCALHOST CONFIGURATION (The Alternative) 🚨 ---
         
-        # 1. Hostname: Your ELB DNS
+        # 1. Hostname MUST match the URL you type in the browser
         - name: KC_HOSTNAME
-          value: "a16df262c5cae44318644bdae3897f7a-720103841.ap-south-1.elb.amazonaws.com"
+          value: "localhost"
         
-        # 2. Port: Explicitly set to 8080
+        # 2. Port MUST match the port-forward
         - name: KC_HOSTNAME_PORT
           value: "8080"
           
-        # 3. PROXY MODE: CHANGED TO 'none' 
-        # (Critical for TCP Load Balancers that don't send headers)
+        # 3. No Proxy (Direct Tunnel)
         - name: KC_PROXY
           value: "none"
         
-        # 4. HTTP Settings
+        # 4. Disable Security Checks
         - name: KC_HTTP_ENABLED
           value: "true"
         - name: KC_HOSTNAME_STRICT
           value: "false"
         - name: KC_HOSTNAME_STRICT_HTTPS
           value: "false"
-        
-        # 5. Fix Cookies & Iframe Timeout
         - name: KC_SPI_SSL_REQUIRED
           value: "none"
-        - name: KC_SPI_STICKY_SESSION_ENCODER_INFI_SPAN_SHOULD_ATTACH_AUTH_SESSION_ID
-          value: "true"
 
 ---
 apiVersion: v1
@@ -63,7 +58,7 @@ metadata:
 spec:
   selector:
     app: keycloak
-  type: LoadBalancer
+  type: ClusterIP  # Changed from LoadBalancer to Internal Only (Saves money too!)
   ports:
     - port: 8080
       targetPort: 8080
