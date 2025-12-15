@@ -51,7 +51,6 @@ jobs:
         # Moves the built JAR and Dockerfile to the root of the service dir for cleaner Docker builds
         run: |
           mv ${{ env.SERVICE_DIR }}/build/libs/*SNAPSHOT.jar ${{ env.SERVICE_DIR }}/app.jar
-          mv ${{ env.SERVICE_DIR }}/Dockerfile ${{ env.SERVICE_DIR }}/Dockerfile.build || true
 
       # 2. Login to AWS using GitHub Secrets 🔐
       #    Uses long-lived access keys stored securely in Repo Settings.

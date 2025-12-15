@@ -49,7 +49,6 @@ jobs:
         # Moves JAR to root so Docker build context is clean
         run: |
           mv ${{ env.SERVICE_DIR }}/build/libs/*SNAPSHOT.jar ${{ env.SERVICE_DIR }}/app.jar
-          mv ${{ env.SERVICE_DIR }}/Dockerfile ${{ env.SERVICE_DIR }}/Dockerfile.build || true
 
       # 2. Secure AWS Login 🔐
       - name: Configure AWS Credentials

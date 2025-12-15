@@ -5,6 +5,7 @@ COPY . .
 RUN gradle clean build -x test --no-daemon
 
 # STAGE 2: Runtime
+#testing purpose
 FROM eclipse-temurin:21-jre-alpine
 RUN addgroup -S spring && adduser -S spring -G spring
 WORKDIR /app

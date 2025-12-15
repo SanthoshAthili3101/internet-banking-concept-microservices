@@ -44,7 +44,6 @@ jobs:
       - name: Prepare Docker Context
         run: |
           mv ${{ env.SERVICE_DIR }}/build/libs/*SNAPSHOT.jar ${{ env.SERVICE_DIR }}/app.jar
-          mv ${{ env.SERVICE_DIR }}/Dockerfile ${{ env.SERVICE_DIR }}/Dockerfile.build || true
 
       # 2. Login to AWS using Secrets
       - name: Configure AWS Credentials
