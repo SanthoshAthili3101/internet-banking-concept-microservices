@@ -25,27 +25,31 @@ spec:
         - name: KEYCLOAK_ADMIN_PASSWORD
           value: "admin"
 
-        # --- 🚨 THE ALTERNATIVE FIX: TRUST EVERYTHING 🚨 ---
-
-        # 1. Trust the Load Balancer Headers (Crucial)
+        # --- 🚨 EXPLICIT HOSTNAME CONFIGURATION 🚨 ---
+        
+        # 1. Hostname: Your ELB DNS (No http://, No Port)
+        - name: KC_HOSTNAME
+          value: "a16df262c5cae44318644bdae3897f7a-720103841.ap-south-1.elb.amazonaws.com"
+        
+        # 2. Port: CRITICAL! Forces redirects to use :8080
+        - name: KC_HOSTNAME_PORT
+          value: "8080"
+          
+        # 3. Proxy: Trust the AWS ELB headers
         - name: KC_PROXY
           value: "edge"
-          
-        # 2. Disable Hostname Verification (Stop checking the URL)
+        
+        # 4. HTTP Settings
+        - name: KC_HTTP_ENABLED
+          value: "true"
         - name: KC_HOSTNAME_STRICT
           value: "false"
         - name: KC_HOSTNAME_STRICT_HTTPS
           value: "false"
-          
-        # 3. Enable HTTP
-        - name: KC_HTTP_ENABLED
-          value: "true"
-
-        # 4. Disable Secure Cookies (Fixes "Cookie not found")
+        
+        # 5. Fix Cookies & Iframe Timeout
         - name: KC_SPI_SSL_REQUIRED
           value: "none"
-          
-        # 5. Fix Iframe Timeout (Fixes the spinner)
         - name: KC_SPI_STICKY_SESSION_ENCODER_INFI_SPAN_SHOULD_ATTACH_AUTH_SESSION_ID
           value: "true"
 
