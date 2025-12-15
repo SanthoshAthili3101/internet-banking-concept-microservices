@@ -24,17 +24,17 @@ spec:
           value: "admin"
         - name: KEYCLOAK_ADMIN_PASSWORD
           value: "admin"
+        # 🚨 CRITICAL FIXES BELOW 🚨
         - name: KC_PROXY
-          value: "edge"
-        # FIX: Explicitly set the Hostname
-        - name: KC_HOSTNAME
-          value: "a9108f982f4404539b584645b87994e0-1749315052.ap-south-1.elb.amazonaws.com"
-        # FIX: Allow HTTP (since we don't have an SSL Certificate yet)
+          value: "edge"  # Tells Keycloak it is behind a Load Balancer
         - name: KC_HOSTNAME_STRICT
-          value: "false"
+          value: "false" # Allows accessing via the AWS Load Balancer URL
         - name: KC_HOSTNAME_STRICT_HTTPS
-          value: "false"
+          value: "false" # Disables the HTTPS requirement
         - name: KC_HTTP_ENABLED
+          value: "true"  # Explicitly enables HTTP listener
+        # This is the "Magic" variable for the iframe timeout issue in Dev mode:
+        - name: KC_SPI_STICKY_SESSION_ENCODER_INFI_SPAN_SHOULD_ATTACH_AUTH_SESSION_ID
           value: "true"
 ---
 apiVersion: v1
