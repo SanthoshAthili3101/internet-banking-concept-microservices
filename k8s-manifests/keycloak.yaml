@@ -25,19 +25,20 @@ spec:
         - name: KEYCLOAK_ADMIN_PASSWORD
           value: "admin"
 
-        # --- 🚨 EXPLICIT HOSTNAME CONFIGURATION 🚨 ---
+        # --- 🚨 TCP MODE CONFIGURATION (The Fix) 🚨 ---
         
-        # 1. Hostname: Your ELB DNS (No http://, No Port)
+        # 1. Hostname: Your ELB DNS
         - name: KC_HOSTNAME
           value: "a16df262c5cae44318644bdae3897f7a-720103841.ap-south-1.elb.amazonaws.com"
         
-        # 2. Port: CRITICAL! Forces redirects to use :8080
+        # 2. Port: Explicitly set to 8080
         - name: KC_HOSTNAME_PORT
           value: "8080"
           
-        # 3. Proxy: Trust the AWS ELB headers
+        # 3. PROXY MODE: CHANGED TO 'none' 
+        # (Critical for TCP Load Balancers that don't send headers)
         - name: KC_PROXY
-          value: "edge"
+          value: "none"
         
         # 4. HTTP Settings
         - name: KC_HTTP_ENABLED
