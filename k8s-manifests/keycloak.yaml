@@ -25,35 +25,27 @@ spec:
         - name: KEYCLOAK_ADMIN_PASSWORD
           value: "admin"
 
-        # --- 🚨 NUCLEAR FIX CONFIGURATION 🚨 ---
-        
-        # 1. FORCE THE PUBLIC URL (Frontend & Redirects)
-        # We explicitly tell Keycloak: "This is your URL. Do not guess."
-        - name: KC_HOSTNAME_URL
-          value: "http://a16df262c5cae44318644bdae3897f7a-720103841.ap-south-1.elb.amazonaws.com:8080"
-        
-        # 2. FORCE THE ADMIN CONSOLE URL (Backend UI)
-        # This fixes the "Loading..." spinner and mixed content errors
-        - name: KC_HOSTNAME_ADMIN_URL
-          value: "http://a16df262c5cae44318644bdae3897f7a-720103841.ap-south-1.elb.amazonaws.com:8080"
+        # --- 🚨 THE ALTERNATIVE FIX: TRUST EVERYTHING 🚨 ---
 
-        # 3. NETWORK PROXY SETTINGS
+        # 1. Trust the Load Balancer Headers (Crucial)
         - name: KC_PROXY
-          value: "edge"  # Trust AWS ELB headers
-        - name: KC_HTTP_ENABLED
-          value: "true"
-        
-        # 4. DISABLE SECURITY CHECKS (Dev Mode)
+          value: "edge"
+          
+        # 2. Disable Hostname Verification (Stop checking the URL)
         - name: KC_HOSTNAME_STRICT
           value: "false"
         - name: KC_HOSTNAME_STRICT_HTTPS
           value: "false"
-        
-        # 5. DISABLE SSL COOKIES (Fixes "Cookie not found")
+          
+        # 3. Enable HTTP
+        - name: KC_HTTP_ENABLED
+          value: "true"
+
+        # 4. Disable Secure Cookies (Fixes "Cookie not found")
         - name: KC_SPI_SSL_REQUIRED
           value: "none"
           
-        # 6. FIX IFRAME TIMEOUT
+        # 5. Fix Iframe Timeout (Fixes the spinner)
         - name: KC_SPI_STICKY_SESSION_ENCODER_INFI_SPAN_SHOULD_ATTACH_AUTH_SESSION_ID
           value: "true"
 
