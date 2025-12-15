@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: core-service
-        image: 982081054052.dkr.ecr.ap-south-1.amazonaws.com/fintech/banking-core:v1
+        image: 982081054052.dkr.ecr.ap-south-1.amazonaws.com/fintech/banking-core:0180d1403f5994e7b1cdedf96d7e4d78b3e4491b
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
