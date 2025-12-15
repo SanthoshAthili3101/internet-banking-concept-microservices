@@ -81,6 +81,7 @@ jobs:
 
       # 5. GitOps: Update Manifest 🔄
       #    Replaces the old image tag with the new Commit Hash
+      # Test Checking
       - name: Update Kubernetes Manifest
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
