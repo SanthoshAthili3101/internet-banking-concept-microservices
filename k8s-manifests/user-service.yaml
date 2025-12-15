@@ -33,6 +33,17 @@ spec:
         # Connection to Core Service (Using K8s DNS name)
         - name: BANKING_CORE_URL
           value: "http://internet-banking-core-service:8080"
+
+        - name: APP_CONFIG_KEYCLOAK_REALM
+          value: "internet-banking-realm" 
+          
+        - name: APP_CONFIG_KEYCLOAK_CLIENT_ID
+          value: "internet-banking-user-client"
+
+        # PASTE YOUR COPIED SECRET HERE 👇
+        - name: APP_CONFIG_KEYCLOAK_CLIENT_SECRET
+          value: "wBwA7v7b8g2UvWs5i3hilh2XUW6d8zkm"
+
         # Database Connection
         - name: DB_HOST
           valueFrom:
