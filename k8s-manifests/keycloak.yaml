@@ -29,15 +29,11 @@ spec:
         
         # 1. Hostname MUST match the URL you type in the browser
         - name: KC_HOSTNAME
-          value: "localhost"
-        
-        # 2. Port MUST match the port-forward
+          value: "auth.3.109.163.253.nip.io"
         - name: KC_HOSTNAME_PORT
-          value: "8080"
-          
-        # 3. No Proxy (Direct Tunnel)
+          value: "80"
         - name: KC_PROXY
-          value: "none"
+          value: "edge"
         
         # 4. Disable Security Checks
         - name: KC_HTTP_ENABLED

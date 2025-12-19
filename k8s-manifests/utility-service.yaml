@@ -16,10 +16,14 @@ spec:
       containers:
       - name: utility-service
         image: 982081054052.dkr.ecr.ap-south-1.amazonaws.com/fintech/utility-service:v1
-        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
         env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: db-host
         - name: SPRING_DATASOURCE_USERNAME
           valueFrom:
             secretKeyRef:
@@ -31,14 +35,11 @@ spec:
               name: db-credentials
               key: db-password
         - name: BANKING_CORE_URL
-          value: "http://internet-banking-core-service:8080"
-        - name: DB_HOST
-          valueFrom:
-            secretKeyRef:
-              name: db-credentials
-              key: db-host
+          value: "http://internet-banking-core-service"
         command: ["/bin/sh", "-c"]
-        args: ["java -jar app.jar --spring.datasource.url=jdbc:mysql://$(DB_HOST)/banking_user_db"]
+        args:
+          - java -jar app.jar --spring.datasource.url=jdbc:mysql://$(DB_HOST)/banking_user_db
+
 ---
 apiVersion: v1
 kind: Service
@@ -50,5 +51,5 @@ spec:
     app: utility-service
   type: ClusterIP
   ports:
-    - port: 8080
-      targetPort: 8080
+  - port: 80
+    targetPort: 8080

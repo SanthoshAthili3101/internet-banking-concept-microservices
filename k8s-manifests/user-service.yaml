@@ -15,43 +15,21 @@ spec:
     spec:
       containers:
       - name: user-service
-        image: 982081054052.dkr.ecr.ap-south-1.amazonaws.com/fintech/user-service:e5c0d8db2d27b0abfa91c7228093ac190da6baff
-        imagePullPolicy: IfNotPresent
+        image: 982081054052.dkr.ecr.ap-south-1.amazonaws.com/fintech/user-service:v1
         ports:
         - containerPort: 8080
         env:
-        - name: SPRING_DATASOURCE_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: db-credentials
-              key: db-username
-        - name: SPRING_DATASOURCE_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: db-credentials
-              key: db-password
-        # Connection to Core Service (Using K8s DNS name)
-        - name: BANKING_CORE_URL
-          value: "http://internet-banking-core-service:8080"
-
-        - name: APP_CONFIG_KEYCLOAK_REALM
-          value: "internet-banking-realm" 
-          
-        - name: APP_CONFIG_KEYCLOAK_CLIENT_ID
-          value: "internet-banking-user-client"
-
-        # PASTE YOUR COPIED SECRET HERE 👇
-        - name: APP_CONFIG_KEYCLOAK_CLIENT_SECRET
-          value: "wBwA7v7b8g2UvWs5i3hilh2XUW6d8zkm"
-
-        # Database Connection
         - name: DB_HOST
           valueFrom:
             secretKeyRef:
               name: db-credentials
               key: db-host
-        command: ["/bin/sh", "-c"]
-        args: ["java -jar app.jar --spring.datasource.url=jdbc:mysql://$(DB_HOST)/banking_user_db"]
+        - name: BANKING_CORE_URL
+          value: http://internet-banking-core-service
+        command: ["/bin/sh","-c"]
+        args:
+          - java -jar app.jar --spring.datasource.url=jdbc:mysql://$(DB_HOST)/banking_user_db
+
 ---
 apiVersion: v1
 kind: Service
@@ -61,7 +39,6 @@ metadata:
 spec:
   selector:
     app: user-service
-  type: LoadBalancer # Public Access for Swagger/Frontend
   ports:
-    - port: 80
-      targetPort: 8080
+  - port: 80
+    targetPort: 8080

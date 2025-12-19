@@ -85,6 +85,7 @@ jobs:
           sed -i "s|image: .*${{ env.IMAGE_NAME }}:.*|image: $REGISTRY/${{ env.IMAGE_NAME }}:$IMAGE_TAG|g" ${{ env.MANIFEST_FILE }}
           
       # 6. Commit and Push Changes 📝
+      #testing
       - name: Commit and Push
         run: |
           git config --global user.name "GitHub Actions"

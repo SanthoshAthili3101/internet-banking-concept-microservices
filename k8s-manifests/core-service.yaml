@@ -16,18 +16,14 @@ spec:
       containers:
       - name: core-service
         image: 982081054052.dkr.ecr.ap-south-1.amazonaws.com/fintech/banking-core:v1
-        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
         env:
-        - name: SPRING_DATASOURCE_URL
+        - name: DB_HOST
           valueFrom:
             secretKeyRef:
               name: db-credentials
               key: db-host
-              optional: false
-        - name: SPRING_DATASOURCE_URL_FULL
-          value: "jdbc:mysql://$(SPRING_DATASOURCE_URL)/banking_core_db"
         - name: SPRING_DATASOURCE_USERNAME
           valueFrom:
             secretKeyRef:
@@ -38,13 +34,11 @@ spec:
             secretKeyRef:
               name: db-credentials
               key: db-password
-        
-        # FIXED INDENTATION HERE:
-        command: ["/bin/sh", "-c"]
-        args: ["java -jar app.jar --spring.datasource.url=jdbc:mysql://$(SPRING_DATASOURCE_URL)/banking_core_db"]
+        command: ["/bin/sh","-c"]
+        args:
+          - java -jar app.jar --spring.datasource.url=jdbc:mysql://$(DB_HOST)/banking_core_db
 
-# FIXED SEPARATOR HERE (No spaces before ---)
----
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -53,7 +47,6 @@ metadata:
 spec:
   selector:
     app: core-service
-  type: ClusterIP
   ports:
-    - port: 8080
-      targetPort: 8080
+  - port: 80
+    targetPort: 8080

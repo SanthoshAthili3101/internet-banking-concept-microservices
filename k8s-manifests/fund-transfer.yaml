@@ -34,6 +34,10 @@ spec:
           value: "http://internet-banking-core-service:8080"
         - name: SPRING_JPA_HIBERNATE_DDL-AUTO
           value: "update"
+        - name: SPRINGDOC_SWAGGER_UI_CONFIG_URL
+          value: "/api/v1/transaction/v3/api-docs/swagger-config"
+        - name: KEYCLOAK_AUTH_SERVER_URL
+          value: "http://3.109.163.253.nip.io"
         - name: DB_HOST
           valueFrom:
             secretKeyRef:
@@ -50,7 +54,7 @@ metadata:
 spec:
   selector:
     app: fund-transfer
-  type: LoadBalancer # Public Access to make transfers
+  type: ClusterIP 
   ports:
     - port: 80
       targetPort: 8080
