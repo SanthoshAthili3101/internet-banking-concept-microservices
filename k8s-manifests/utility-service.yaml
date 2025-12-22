@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: utility-service
-        image: 982081054052.dkr.ecr.ap-south-1.amazonaws.com/fintech/utility-service:v1
+        image: 982081054052.dkr.ecr.ap-south-1.amazonaws.com/fintech/utility-service:23bef36214e7db846ca6b5f70f4117e7b1c47f00
         ports:
         - containerPort: 8080
         env:
