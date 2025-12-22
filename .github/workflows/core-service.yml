@@ -71,6 +71,7 @@ jobs:
           # Use GitHub Actions cache to speed up Docker builds
           cache-from: type=gha 
           cache-to: type=gha,mode=max
+          provenance: false
 
       # 5. GitOps: Update Manifest
       - name: Update Kubernetes Manifest
