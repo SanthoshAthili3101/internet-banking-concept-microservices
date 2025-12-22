@@ -11,11 +11,11 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - auth.13.234.210.87.nip.io
-    - bank.13.234.210.87.nip.io
+    - auth.13.127.208.24.nip.io
+    - bank.13.127.208.24.nip.io
     secretName: fintech-tls-secret
   rules:
-  - host: auth.13.234.210.87.nip.io
+  - host: auth.13.127.208.24.nip.io
     http:
       paths:
       - path: /
@@ -26,7 +26,7 @@ spec:
             port:
               number: 8080
 
-  - host: bank.13.234.210.87.nip.io
+  - host: bank.13.127.208.24.nip.io
     http:
       paths:
       - path: /api/v1/user(/|$)(.*)

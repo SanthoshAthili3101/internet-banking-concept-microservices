@@ -29,7 +29,7 @@ spec:
         
         # 1. Hostname MUST match the URL you type in the browser
         - name: KC_HOSTNAME
-          value: "auth.3.109.163.253.nip.io"
+          value: "auth.13.127.208.24.nip.io"
         - name: KC_HOSTNAME_PORT
           value: "80"
         - name: KC_PROXY
