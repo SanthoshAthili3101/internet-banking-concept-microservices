@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: fund-transfer
-        image: 982081054052.dkr.ecr.ap-south-1.amazonaws.com/fintech/fund-transfer:23bef36214e7db846ca6b5f70f4117e7b1c47f00
+        image: 982081054052.dkr.ecr.ap-south-1.amazonaws.com/fintech/fund-transfer:3a3086a6ca13168d107328eb04f7bcb4513eb891
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
