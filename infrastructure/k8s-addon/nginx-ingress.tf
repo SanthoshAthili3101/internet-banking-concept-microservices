@@ -5,7 +5,9 @@ resource "helm_release" "nginx_ingress" {
   repository = "https://kubernetes.github.io/ingress-nginx"
   chart      = "ingress-nginx"
   version    = "4.10.1"
-
+  depends_on = [
+      helm_release.kube_prometheus_stack
+    ]
   create_namespace = true
   wait             = true
   timeout          = 600
